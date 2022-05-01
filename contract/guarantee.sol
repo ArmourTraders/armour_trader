@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.7.0 <0.9.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./factoryV1.sol";
+
+interface IfactoryV1{
+    function giveOutRewards() external;
+}
 contract Guarantee {
     address _factory;
     address _partA;
@@ -9,7 +12,7 @@ contract Guarantee {
     address _coinAddress;
     address _coinStorage;
     uint256 _amount;
-    enum State {CREATE,CANCEL,CONFIRMED}
+    enum State {CREATE,CANCEL,CONFIRMED,COMPLETED}
     State _state;
 
     constructor(address partA, address partB, address coinAddress, uint256 amount,address coinStorage) {
@@ -48,13 +51,13 @@ contract Guarantee {
     *
     **/
     function partAWithdraw() public onlyPartA atState(State.CANCEL) {
-        _state = State.CANCEL;
         IERC20 coin = IERC20(_coinAddress);
         coin.transfer(_partA,_amount);
+        _state = State.COMPLETED;
     }
 
     function _giveOutRewards() private{
-        FactoryV1 factory = FactoryV1(_factory);
+        IfactoryV1 factory = IfactoryV1(_factory);
         factory.giveOutRewards();
     }
 
@@ -63,11 +66,11 @@ contract Guarantee {
     *
     **/
     function partBWithdraw() public onlyPartB atState(State.CONFIRMED) {
-        _state = State.CANCEL;
         IERC20 coin = IERC20(_coinAddress);
         coin.transfer(_partB,_amount * 999 / 1000);  
         coin.transfer(_coinStorage,_amount / 1000);      
         _giveOutRewards();
+        _state = State.COMPLETED;
     }
 
    

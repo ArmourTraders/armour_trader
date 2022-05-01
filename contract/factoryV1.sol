@@ -29,6 +29,10 @@ contract FactoryV1 is Ownable{
         _owner = msg.sender;
     }
 
+    function getAppealStatus(address guarantee) public view returns(bool){
+        return _guaranteeContracts[guarantee].judgeSolve;
+    }
+
     function setArmourTokenAddress(address ArmourTokenAddress) public onlyOwner{
         _armourTokenAddress = ArmourTokenAddress;
     }
@@ -66,7 +70,7 @@ contract FactoryV1 is Ownable{
         require(coin.allowance(msg.sender,address(this)) > amount,"please appove");
         Guarantee guaranteeContract = new Guarantee(msg.sender,partB,coinAddress,amount,_coinStorage); 
         guaranteeAddress = address(guaranteeContract); 
-        emit createGuaranteeContract(guaranteeAddress);
+        emit createGuaranteeContract(guaranteeAddress,msg.sender,partB,coinAddress,amount);
 
         _guaranteeContracts[guaranteeAddress].partA = msg.sender;
         _guaranteeContracts[guaranteeAddress].partB = partB;
@@ -94,14 +98,14 @@ contract FactoryV1 is Ownable{
     function giveOutRewards() public{
         require(_guaranteeContracts[msg.sender].notReward,"only guaranteeContract can call this function");
         ArmourToken armourToken = ArmourToken(_armourTokenAddress);
-        //110% reward to partA 
-        uint256 partAReward = _guaranteeContracts[msg.sender].amount/1000 /10 * 11 * _supportCoins[_guaranteeContracts[msg.sender].coinAddress].rewardRatio;
-        //10% reward to partB 
-        uint256 partBReward = _guaranteeContracts[msg.sender].amount/1000 /10 * _supportCoins[_guaranteeContracts[msg.sender].coinAddress].rewardRatio;
+        //10% reward to partA 
+        uint256 partAReward = _guaranteeContracts[msg.sender].amount/1000 /10 * _supportCoins[_guaranteeContracts[msg.sender].coinAddress].rewardRatio;
+        //110% reward to partB 
+        uint256 partBReward = _guaranteeContracts[msg.sender].amount/1000 /10 * 11 * _supportCoins[_guaranteeContracts[msg.sender].coinAddress].rewardRatio;
         armourToken.mint(_guaranteeContracts[msg.sender].partA,partAReward);
         armourToken.mint(_guaranteeContracts[msg.sender].partB,partBReward);
         _guaranteeContracts[msg.sender].notReward = false;
     }
-    event createGuaranteeContract(address guaranteeAddress);
+    event createGuaranteeContract(address guaranteeAddress,address partA,address partB,address coinAddresss,uint amount);
 
 }
