@@ -51,7 +51,7 @@ contract Guarantee {
         IERC20 coin = IERC20(_coinAddress);
         coin.transfer(_partyA,_amount);
         _state = State.COMPLETED;
-        emit partyAWithdrawed(address(this));
+        emit stateChange(address(this),2);
     }
 
     /**
@@ -63,7 +63,7 @@ contract Guarantee {
         coin.transfer(_partyB,_amount * 999 / 1000);  
         coin.transfer(_coinStorage,_amount / 1000);      
         _state = State.COMPLETED;
-        emit partyBWithdrawed(address(this));
+        emit stateChange(address(this),3);
     }
 
    
@@ -73,7 +73,7 @@ contract Guarantee {
     **/
     function cancel() public onlypartyB atState(State.CREATE){
         _state = State.CANCEL;
-        emit partyBCanceled(address(this));
+        emit stateChange(address(this),1);
     }
 
    
@@ -83,7 +83,7 @@ contract Guarantee {
     **/
     function confirmed() public onlypartyA atState(State.CREATE){
         _state = State.CONFIRMED;
-        emit partyAConfirmed(address(this));
+        emit stateChange(address(this),0);
     }
 
     //belong == 0 means property belongs to partyA otherwise belong == 1 means property belongs to partyB
@@ -91,8 +91,12 @@ contract Guarantee {
         if (belong == 0) _state = State.CANCEL;
         if (belong == 1) _state = State.CONFIRMED;
     } 
-    event partyAConfirmed(address contractAddress);
-    event partyBCanceled(address contractAddress);
-    event partyAWithdrawed(address contractAddress);
-    event partyBWithdrawed(address contractAddress);
+
+    /**
+    * curEvent == 0,partyA confirmed
+    * curEvent == 1,partyB Canceled
+    * curEvent == 2,partyA Withdrawed
+    * curEvent == 3,partyB Withdrawed
+    **/
+    event stateChange(address contractAddress,uint8 curEvent);
 }
